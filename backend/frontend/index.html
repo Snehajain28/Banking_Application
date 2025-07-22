@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>KYC Upload</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .message { margin-top: 20px; padding: 10px; border-radius: 5px; font-weight: bold; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h2>📁 Upload Your KYC Documents</h2>
+
+  <form id="kycForm">
+    <input type="text" name="name" placeholder="Name" required /><br />
+    <input type="email" name="email" placeholder="Email" required /><br />
+    <input type="file" name="aadhar" required /><br />
+    <input type="file" name="pan" required /><br />
+    <input type="file" name="photo" required /><br />
+    <button type="submit">Upload KYC</button>
+  </form>
+
+  <div id="response" class="message"></div>
+
+  <script>
+    document.getElementById("kycForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+
+      fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Upload failed");
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById("response").innerHTML =
+          `<p class="success">${data.message}</p>`;
+        form.reset();
+      })
+      .catch(error => {
+        document.getElementById("response").innerHTML =
+          `<p class="error">❌ Error: ${error.message}. Please try again.</p>`;
+      });
+    });
+  </script>
+</body>
+</html>

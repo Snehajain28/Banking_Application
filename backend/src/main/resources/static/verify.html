@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify KYC</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    async function getProfileAndLoad() {
+      const res = await fetch("/api/auth/profile", { credentials: "include" });
+      if (res.ok) {
+        const user = await res.json();
+        if (user.role !== "ADMIN") {
+          alert("❌ Admin access only.");
+          window.location.href = "/login.html";
+        }
+        document.getElementById("profile").innerText =
+          `Logged in as: ${user.email} (${user.role})`;
+        document.getElementById("logoutBtn").style.display = "inline";
+        loadSubmissions();
+      } else {
+        window.location.href = "/login.html";
+      }
+    }
+
+    async function logout() {
+      if (confirm("Logout?")) {
+        await fetch("/api/auth/logout", { credentials: "include" });
+        window.location.href = "/login.html";
+      }
+    }
+
+    function verifyCustomer(id) {
+      if (!confirm("Verify this KYC submission?")) return;
+      fetch("/api/verify/" + id, { method: "PUT", credentials: "include" })
+        .then(() => {
+          alert("✅ Verified");
+          loadSubmissions();
+        });
+    }
+
+    function rejectCustomer(id) {
+      if (!confirm("Reject this KYC submission?")) return;
+      fetch("/api/reject/" + id, { method: "PUT", credentials: "include" })
+        .then(() => {
+          alert("❌ Rejected");
+          loadSubmissions();
+        });
+    }
+
+    function loadSubmissions() {
+      fetch("/api/admin/submissions", { credentials: "include" })
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById("kycTable");
+          table.innerHTML = "<tr><th>ID</th><th>Name</th><th>Status</th><th>Action</th><th>Files</th></tr>";
+          data.forEach(c => {
+            table.innerHTML += `
+              <tr>
+                <td>${c.id}</td>
+                <td>${c.name}</td>
+                <td>${c.kycStatus}</td>
+                <td>
+                  ${
+                    c.kycStatus === "Pending"
+                      ? `<button onclick="verifyCustomer(${c.id})">Verify</button>
+                         <button onclick="rejectCustomer(${c.id})">Reject</button>`
+                      : `<span>${c.kycStatus}</span>`
+                  }
+                </td>
+                <td>
+                  <a href="/api/download/${c.id}/aadhaar">Aadhaar</a> |
+                  <a href="/api/download/${c.id}/pan">PAN</a> |
+                  <a href="/api/download/${c.id}/photo">Photo</a>
+                </td>
+              </tr>`;
+          });
+        });
+    }
+
+    window.onload = getProfileAndLoad;
+  </script>
+</head>
+<body>
+  <nav>
+    <span id="profile"></span>
+    <button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button><br><br>
+    <a href="/register.html">Register</a> |
+    <a href="/login.html">Login</a> |
+    <a href="/verify.html">Admin Panel</a>
+  </nav>
+
+  <h2>All KYC Submissions</h2>
+  <table id="kycTable"></table>
+</body>
+</html>

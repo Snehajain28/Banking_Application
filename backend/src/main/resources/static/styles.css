@@ -1,0 +1,92 @@
+/* Reset default styles */
+body, h1, h2, h3, p, ul, li, input, select, button {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  box-sizing: border-box;
+}
+
+/* Page styling */
+body {
+  background-color: #f9f9f9;
+  color: #333;
+  padding: 40px;
+  max-width: 600px;
+  margin: auto;
+}
+
+h2 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  color: #444;
+}
+
+/* Forms */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+input, select, button {
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Buttons */
+button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background-color: #005ea2;
+}
+
+/* Navigation Bar */
+nav {
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 30px;
+  padding: 10px 0;
+  text-align: center;
+  color: black;
+}
+
+nav a {
+  text-decoration: none;
+  color: #0078d4;
+  margin: 0 10px;
+  font-weight: 500;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* Tables (used in admin panel) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ccc;
+}
+
+td a {
+  color: #0078d4;
+  text-decoration: none;
+}
+
+td a:hover {
+  text-decoration: underline;
+}

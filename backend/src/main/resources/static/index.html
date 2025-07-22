@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KYC Upload</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    async function getProfile() {
+      const res = await fetch("/api/auth/profile", { credentials: "include" });
+      if (res.ok) {
+        const user = await res.json();
+        if (user.role !== "CUSTOMER") {
+          alert("❌ Only customers can upload KYC.");
+          window.location.href = "/login.html";
+        }
+        document.getElementById("profile").innerText =
+          `Logged in as: ${user.email} (${user.role})`;
+        document.getElementById("logoutBtn").style.display = "inline";
+      } else {
+        window.location.href = "/login.html";
+      }
+    }
+
+    async function logout() {
+      if (confirm("Logout?")) {
+        await fetch("/api/auth/logout", { credentials: "include" });
+        window.location.href = "/login.html";
+      }
+    }
+
+    async function handleUpload(event) {
+      event.preventDefault();
+      if (!confirm("Are you sure you want to submit your KYC documents?")) return;
+
+      const form = document.querySelector("form");
+      const formData = new FormData(form);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "include"
+        });
+
+        const result = await res.json();
+        const msgBox = document.getElementById("message");
+
+        if (res.ok && result.status === "success") {
+          msgBox.innerHTML = `<p style="color: green;">🎉 ${result.message}</p>`;
+          setTimeout(() => window.location.href = "/success.html", 1500);
+        } else {
+          msgBox.innerHTML = `<p style="color: red;">${result.message || "❌ Upload failed."}</p>`;
+        }
+      } catch (err) {
+        document.getElementById("message").innerHTML = `<p style="color: red;">❌ Upload error occurred.</p>`;
+      }
+    }
+
+    window.onload = getProfile;
+  </script>
+</head>
+<body>
+  <nav>
+    <span id="profile"></span>
+    <button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button><br><br>
+    <a href="/register.html">Register</a> |
+    <a href="/login.html">Login</a> |
+    <a href="/index.html">Upload KYC</a> |
+    <a href="/status.html">Check Status</a>
+  </nav>
+
+  <h2>KYC Upload</h2>
+  <form onsubmit="handleUpload(event)">
+    <input type="text" name="name" placeholder="Full Name" required><br>
+    <input type="email" name="email" placeholder="Registered Email" required><br>
+    <label for="aadhar">AADHAR:</label>
+    <input type="file" name="aadhar" required><br>
+    <label for="pan">PAN:</label>
+    <input type="file" name="pan" required><br>
+    <label for="photo">Photo:</label>
+    <input type="file" name="photo" required><br>
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="message" style="margin-top: 20px;"></div>
+</body>
+</html>

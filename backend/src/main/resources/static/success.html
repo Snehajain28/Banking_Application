@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KYC Submitted</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    async function getProfile() {
+      const res = await fetch("/api/auth/profile", { credentials: "include" });
+      if (res.ok) {
+        const user = await res.json();
+        document.getElementById("profile").innerText =
+          `Logged in as: ${user.email} (${user.role})`;
+        document.getElementById("logoutBtn").style.display = "inline";
+      } else {
+        document.getElementById("logoutBtn").style.display = "none";
+      }
+    }
+
+    async function logout() {
+      if (confirm("Logout?")) {
+        await fetch("/api/auth/logout", { credentials: "include" });
+        window.location.href = "/login.html";
+      }
+    }
+
+    window.onload = getProfile;
+  </script>
+</head>
+<body>
+  <nav>
+    <span id="profile"></span>
+    <button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button><br><br>
+    <a href="/register.html">Register</a> |
+    <a href="/login.html">Login</a> |
+    <a href="/index.html">Upload KYC</a> |
+    <a href="/status.html">Check Status</a> |
+    <a href="/verify.html">Admin Panel</a>
+  </nav>
+
+  <div class="container">
+    <h2>🎉 KYC Submission Successful!</h2>
+    <p>Your documents have been received. Our team will verify them shortly.</p>
+    <a href="/status.html">Click here to check your status</a>
+  </div>
+</body>
+</html>

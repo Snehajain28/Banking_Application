@@ -1,0 +1,11 @@
+<button onclick="fetchStatus()">Check Status</button>
+<div id="results"></div>
+<script>
+  function fetchStatus() {
+    fetch("/api/status")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('results').innerHTML = data.map(c => `<p>${c.name}: ${c.kycStatus}</p>`).join('');
+      });
+  }
+</script>
