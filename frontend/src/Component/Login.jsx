@@ -1,99 +1,98 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
-export default function Login() {
+function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ email: '', password: '' });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
-  const validate = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.email || !formData.password) {
-      return "Both fields are required.";
-    }
-
-    if (!emailRegex.test(formData.email)) {
-      return "Invalid email format.";
-    }
-
-    return null;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const errorMsg = validate();
-    if (errorMsg) {
-      setError(errorMsg);
+
+    const data = new FormData();
+data.append('email', formData.email);
+data.append('password', formData.password);
+let res ;
+try {
+ res=  await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, data, {
+  withCredentials: true,
+  headers: {
+    "Content-Type": "multipart/form-data"
+  }
+});
+  const { email, role } = res.data;
+
+    // Store in localStorage or state
+    localStorage.setItem("email", email);
+    localStorage.setItem("role", role);
+
+      toast.success('Login successful!');
+    if (role === "admin") {
+      navigate("/admin-portal");
     } else {
-      setError("");
-      alert("Login successful!");
-      console.log("Logging in:", formData);
+      navigate("/dashboard");
     }
-    navigate("/kyc");
+     window.location.reload();
+    } catch (err) {
+      toast.error('Invalid credentials!');
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
+        className="w-full max-w-md bg-white p-10 rounded-xl shadow-md flex flex-col gap-6"
       >
-        <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">
-          Login
-        </h2>
+        <h2 className=" text-3xl font-semibold text-center text-blue-600">Login</h2>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
-            {error}
-          </div>
-        )}
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          required
+          value={formData.email}
+          onChange={handleChange}
+          className="border rounded-md px-4 py-3 w-full"
+        />
 
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-700">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="block mb-1 text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Enter password"
-            required
-          />
-        </div>
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          required
+          value={formData.password}
+          onChange={handleChange}
+          className="border rounded-md px-4 py-3 w-full"
+        />
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"
+          className="bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition font-semibold"
         >
           Login
         </button>
+
+        <p className="text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <span
+            className="text-blue-600 font-medium hover:underline cursor-pointer"
+            onClick={() => navigate('/register')}
+          >
+            Register here
+          </span>
+        </p>
       </form>
-        <div className="flex gap-2 h-full  mt-4">
-      <p>Don't have an account  ? </p>
-      <Link to="/register" className="text-blue-600 hover:underline  " >Register</Link>
-   </div>
     </div>
   );
 }
+
+export default Login;

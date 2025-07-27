@@ -1,120 +1,162 @@
-import React , { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useRef, useState } from 'react';
+import axios from 'axios';
+import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
-export default function Register() {
+function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
+    fullName: '',
+    email: '',
+    phone: '',
+    dob: '',
+    address: '',
+    password: ''
   });
 
-  const [error, setError] = useState("");
+  const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [panFile, setPanFile] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+
+  // Refs for file inputs
+  const aadhaarRef = useRef();
+  const panRef = useRef();
+  const photoRef = useRef();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
-  const validate = () => {
-    const { email, password, confirmPassword } = formData;
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?#&])[A-Za-z\d@$!%*?#&]{8,}$/;
-
-    if (!email || !password || !confirmPassword) {
-      return "All fields are required.";
-    }
-
-    if (!emailRegex.test(email)) {
-      return "Invalid email format.";
-    }
-
-    if (!passwordRegex.test(password)) {
-      return "Password must be at least 8 characters, include uppercase, lowercase, number, and special character.";
-    }
-
-    if (password !== confirmPassword) {
-      return "Passwords do not match.";
-    }
-
-    return null;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+  const handleFileSelect = (e, setFile, acceptType, label) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!acceptType.includes(file.type)) {
+      toast.error(`${label} must be a ${acceptType.join(', ')}`);
     } else {
-      setError("");
-      alert("Registration successful!");
-      console.log("Form data:", formData);
+      setFile(file);
+    }
+  };
+
+  const handleDrop = (e, setFile, acceptType, label) => {
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files[0];
+    if (!droppedFile) return;
+    if (!acceptType.includes(droppedFile.type)) {
+      toast.error(`${label} must be a ${acceptType.join(', ')}`);
+    } else {
+      setFile(droppedFile);
+    }
+  };
+
+  const renderDropzone = (label, file, setFile, acceptType, acceptText, inputRef, isImage = false) => (
+    <div
+      className="w-full h-44 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-400 hover:border-blue-500 rounded-md text-center transition bg-white shadow-sm cursor-pointer"
+      onClick={() => inputRef.current.click()}
+      onDrop={(e) => handleDrop(e, setFile, acceptType, label)}
+      onDragOver={(e) => e.preventDefault()}
+    >
+      <input
+        type="file"
+        accept={acceptType.join(',')}
+        style={{ display: 'none' }}
+        ref={inputRef}
+        onChange={(e) => handleFileSelect(e, setFile, acceptType, label)}
+      />
+      {file ? (
+        isImage ? (
+          <img src={URL.createObjectURL(file)} alt="Preview" className="h-24 w-24 object-cover rounded-full" />
+        ) : (
+          <p className="text-sm font-medium text-green-600">{file.name}</p>
+        )
+      ) : (
+        <>
+          <CloudArrowUpIcon className="h-8 w-8 text-blue-600" />
+          <p className="text-gray-500 text-sm font-medium">
+            Click or Drag & Drop {label} <br />
+            <span className="text-xs text-gray-400">(Only {acceptText})</span>
+          </p>
+        </>
+      )}
+    </div>
+  );
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!aadhaarFile || !panFile || !photoFile) {
+      toast.error('Upload Aadhaar, PAN, and Profile Photo!');
+      return;
+    }
+const data = new FormData();
+data.append('name', formData.fullName); 
+data.append('email', formData.email);
+data.append('password', formData.password);
+data.append('dob', formData.dob);
+data.append('phone', formData.phone);
+data.append('address', formData.address);
+data.append('aadhar', aadhaarFile); 
+data.append('pan', panFile);
+data.append('photo', photoFile);
+
+    try {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      toast.success('Registered successfully!');
+      localStorage.setItem('email', formData.email);
+      localStorage.setItem('role', 'customer');
+     window.location.reload();
+    } catch (err) {
+      toast.error('Registration failed. Try again!');
+      console.log(err)
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-md p-8 rounded-xl w-full max-w-md"
+        className="w-full max-w-5xl bg-white p-10 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">
-          Register
-        </h2>
+        <h2 className="col-span-full text-3xl font-semibold text-center text-blue-600">Register</h2>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded text-sm">
-            {error}
+        <input type="text" name="fullName" placeholder="Full Name" required onChange={handleChange} value={formData.fullName} className="border rounded-md px-4 py-3 w-full" />
+        <input type="email" name="email" placeholder="Email" required onChange={handleChange} value={formData.email} className="border rounded-md px-4 py-3 w-full" />
+
+        <input type="text" name="phone" placeholder="Phone Number" required onChange={handleChange} value={formData.phone} className="border rounded-md px-4 py-3 w-full" />
+        <input type="date" name="dob" required onChange={handleChange} value={formData.dob} className="border rounded-md px-4 py-3 w-full" />
+
+        <input type="text" name="address" placeholder="Address" required onChange={handleChange} value={formData.address} className="border rounded-md px-4 py-3 col-span-full" />
+        <input type="password" name="password" placeholder="Password" required onChange={handleChange} value={formData.password} className="border rounded-md px-4 py-3 col-span-full" />
+
+        {/* Aadhaar and PAN Upload */}
+        <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6">
+          {renderDropzone('Aadhaar Card', aadhaarFile, setAadhaarFile, ['application/pdf'], 'PDF', aadhaarRef)}
+          {renderDropzone('PAN Card', panFile, setPanFile, ['application/pdf'], 'PDF', panRef)}
+        </div>
+
+        {/* Profile Photo Upload */}
+        <div className="col-span-full flex justify-center">
+          <div className="w-full max-w-md">
+            {renderDropzone('Profile Photo', photoFile, setPhotoFile, ['image/png', 'image/jpeg'], 'JPG/PNG', photoRef, true)}
           </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-700">Email</label>
-          <input
-            type="email"
-            name="email"
-            className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block mb-1 text-gray-700">Password</label>
-          <input
-            type="password"
-            name="password"
-            className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="block mb-1 text-gray-700">Re-type Password</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            className="w-full border px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
         </div>
 
         <button
           type="submit"
-          className="w-full h-full bg-blue-400 text-white py-2 rounded-lg transition"
+          className="col-span-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition font-semibold"
         >
-          Register
+          Submit
         </button>
       </form>
-      <div className="flex gap-2 h-full  mt-4">
-      <p>Already have an account  ? </p>
-      <Link to="/login" className="text-blue-600 hover:underline  " >Login</Link>
-   </div>
     </div>
   );
 }
+
+export default Register;

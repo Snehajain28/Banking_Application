@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>KYC Status</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    async function getProfile() {
+      const res = await fetch("/api/auth/profile", { credentials: "include" });
+      if (res.ok) {
+        const user = await res.json();
+        document.getElementById("email").value = user.email;
+        document.getElementById("email").readOnly = true;
+        document.getElementById("profile").innerText =
+          `Logged in as: ${user.email} (${user.role})`;
+        document.getElementById("logoutBtn").style.display = "inline";
+      } else {
+        window.location.href = "/login.html";
+      }
+    }
+
+    async function logout() {
+      if (confirm("Logout?")) {
+        await fetch("/api/auth/logout", { credentials: "include" });
+        window.location.href = "/login.html";
+      }
+    }
+
+    function checkStatus(e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      fetch("/api/status/" + email, { credentials: "include" })
+        .then(res => {
+          if (!res.ok) throw new Error("Not found");
+          return res.json();
+        })
+        .then(data => {
+          document.getElementById("result").innerHTML = `
+            <strong>Status:</strong> ${data.kycStatus}<br>
+            <strong>Submitted At:</strong> ${data.submittedAt || "N/A"}<br>
+            <strong>Verified At:</strong> ${data.verifiedAt || "N/A"}
+          `;
+        })
+        .catch(() => {
+          document.getElementById("result").innerText = "❌ No KYC found.";
+        });
+    }
+
+    window.onload = getProfile;
+  </script>
+</head>
+<body>
+  <nav>
+    <span id="profile"></span>
+    <button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button><br><br>
+    <a href="/register.html">Register</a> |
+    <a href="/login.html">Login</a> |
+    <a href="/status.html">Check Status</a>
+  </nav>
+
+  <h2>Check Your KYC Status</h2>
+  <form onsubmit="checkStatus(event)">
+    <input type="email" id="email" placeholder="Your registered email" required>
+    <button type="submit">Check</button>
+  </form>
+  <div id="result" style="margin-top: 20px;"></div>
+</body>
+</html>
